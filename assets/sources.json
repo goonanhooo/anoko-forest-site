@@ -51,9 +51,9 @@
       "models/usagi.glb"
     ],
     "geometry": "Imported original GLB meshes with runtime Loop subdivision and proportion refinements based on user-supplied figure photographs.",
-    "smile_eyes_source": "https://pbs.twimg.com/media/FNEsouhVIAUGqOs?format=jpg&name=large",
-    "smile_behavior": "Usagi always keeps the original face, including scared, held, juggling and eating states.",
-    "expression_reference": "User-supplied Chiikawa and Hachiware figure photographs, 2026-10-23"
+    "smile_behavior": "Chiikawa and Hachiware use photo-derived calm, smiling and frightened expressions. Usagi always keeps the photo-derived base face, including scared, held, juggling and eating states.",
+    "expression_reference": "User-supplied Chiikawa, Hachiware and Usagi figure photographs, 2026-10-23"
   },
-  "weapon_reference": "https://chiikawamarket.jp/products/4589468443698"
+  "weapon_reference": "https://chiikawamarket.jp/products/4589468443698",
+  "weapon_modifications": "Six white spikes anchored to the inner fork surface on each sasumata. Usagi carries a yellow staff with white tips. Visible palms are constrained to shaft grip points through all animation states."
 }

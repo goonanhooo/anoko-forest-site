@@ -1,5 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 import {loadCharacterAsset,applyExpression} from './character-assets.js';
+import {createWeaponRig,updateWeaponGrip,weaponGripSnapshot} from './weapon-rig.js';
 
 const canvas=document.querySelector('#forest');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
@@ -95,24 +96,14 @@ for(let i=0;i<160;i++){dustPositions[i*3]=sr(-25,25);dustPositions[i*3+1]=sr(.5,
 const moteCanvas=document.createElement('canvas');moteCanvas.width=moteCanvas.height=32;const mx=moteCanvas.getContext('2d'),mg=mx.createRadialGradient(16,16,0,16,16,16);mg.addColorStop(0,'#fffbd9ff');mg.addColorStop(.2,'#fffbd9bb');mg.addColorStop(1,'#fffbd900');mx.fillStyle=mg;mx.fillRect(0,0,32,32);
 const motes=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:'#fff7cd',size:.12,map:new THREE.CanvasTexture(moteCanvas),transparent:true,depthWrite:false,opacity:.7}));scene.add(motes);
 
-function spear(type,parent){
- const g=new THREE.Group();parent.add(g);const m=mat(type===0?'#e5a5b3':type===1?'#88b8d2':'#e2c17a');
- cylinderBetween(g,[0,-.5,0],[0,type<2?1.02:.85,0],.035,m);
- if(type<2){
-  tube(g,[[-.27,1.47,0],[-.27,1.23,0],[-.22,1.1,0],[-.13,1.03,0],[0,1.01,0],[.13,1.03,0],[.22,1.1,0],[.27,1.23,0],[.27,1.47,0]],.039,m);
-  for(const side of [-1,1])for(let j=0;j<3;j++){const spike=mesh(new THREE.ConeGeometry(.041,.14,8),white,g,[side*(j===0?.235:.265),1.16+j*.125,0]);spike.quaternion.setFromUnitVectors(up,new THREE.Vector3(-side,.28,0).normalize());}
-  cylinderBetween(g,[0,-.51,0],[0,-.31,0],.042,white);
- }else{ball(g,pink,[0,.85,0],[.075,.14,.075]);ball(g,pink,[0,-.51,0],[.075,.14,.075]);}
- g.position.set(.17,-.01,.5);g.rotation.z=-.35;return g;
-}
 const tearMat=mat('#a4dbe8',{transparent:true,opacity:.82,roughness:.18});
 const names=['치이카와','하치와레','우사기'];
 async function createCharacter(type,x,z){
  const asset=await loadCharacterAsset(type);
  const root=new THREE.Group(),rig=new THREE.Group();root.add(rig);rig.add(asset.model);root.position.set(x,0,z);scene.add(root);
  const tears=[];for(const side of [-1,1]){const t=ball(rig,tearMat,[side*.27,1.12,.52],[.033,.12,.025]);asset.headPivot.attach(t);t.visible=false;t.castShadow=false;tears.push(t);}
- const weapon=spear(type,asset.arms[1]);weapon.visible=true;
- const c={...asset,type,name:names[type],root,rig,tears,weapon,state:'idle',stateAt:0,until:0,home:new THREE.Vector3(x,0,z),velocity:new THREE.Vector3(),fear:0,tripAt:100,nextIdle:rng(4,9),nextVoice:0,face:'calm',followOffset:0,eatAt:0,danceReact:0};characters[type]=c;return c;
+ const weaponRig=createWeaponRig(type,rig,asset.arms);
+ const c={...asset,...weaponRig,type,name:names[type],root,rig,tears,state:'idle',stateAt:0,until:0,home:new THREE.Vector3(x,0,z),velocity:new THREE.Vector3(),fear:0,tripAt:100,nextIdle:rng(4,9),nextVoice:0,face:'calm',followOffset:0,eatAt:0,danceReact:0};characters[type]=c;updateWeaponGrip(c,0);return c;
 }
 camera.rotation.set(pitch,yaw,0);renderer.render(scene,camera);
 await Promise.all([createCharacter(0,-2.15,.7),createCharacter(1,0,-.15),createCharacter(2,2.2,.75)]);
@@ -149,7 +140,7 @@ function freeCharacters(){return characters.filter(c=>!['held','juggle','eating'
 function nearestTarget(){const dir=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);let best=null,score=1e9;for(const c of freeCharacters()){tmp.copy(c.root.position).add(new THREE.Vector3(0,.95,0)).sub(camera.position);const dist=tmp.length(),dot=tmp.clone().normalize().dot(dir);if(dist<7.8&&dot>.8){const s=dist+(1-dot)*12;if(s<score){score=s;best=c;}}}return best;}
 function grab(){const c=nearestTarget();if(!c||held.length>=3){if(!c&&held.length)release(false);return;}state(c,juggling?'juggle':'held');held.push(c);c.weapon.visible=true;c.fear=1;setFace(c,c.type===2?'angry':'scared');voice(c,'fear',true);handReach=1;effect(250,.16,.08);}
 function release(toss=false){if(!held.length)return;const c=held.pop();c.root.scale.setScalar(1);c.rig.rotation.set(0,0,0);c.root.rotation.x=0;const dir=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);c.velocity.copy(dir).multiplyScalar(toss?3.6:.7);c.velocity.y=toss?2.6:.2;state(c,'thrown');setFace(c,'scared');effect(220,.25,.05);if(!held.length)juggling=false;}
-function toggleJuggle(){if(!held.length)grab();if(!held.length)return;juggling=!juggling;held.forEach(c=>{state(c,juggling?'juggle':'held');setFace(c,juggling?'dizzy':'scared');});effect(juggling?600:400,.2);}
+function toggleJuggle(){if(!held.length)grab();if(!held.length)return;juggling=!juggling;held.forEach(c=>{state(c,juggling?'juggle':'held');setFace(c,'scared');});effect(juggling?600:400,.2);}
 function eat(){if(characters.some(c=>c.state==='eating'))return;if(!held.length){grab();if(!held.length)return;}const c=held.pop();state(c,'eating');c.eatAt=time;c.eatFrom=c.root.position.clone();setFace(c,'scared');voice(c,'fear',true);document.body.classList.add('eating');setTimeout(()=>document.body.classList.remove('eating'),2600);setTimeout(()=>effect(125,.22,.13),1100);setTimeout(()=>effect(85,.28,.11),1550);setTimeout(()=>effect(58,.42,.13),2000);if(!held.length)juggling=false;}
 function scare(){danceUntil=-100;for(const c of freeCharacters()){c.fear=1;if(c.type===0){state(c,'flee',7);c.tripAt=time+1.8;}else if(c.type===1){state(c,'defend',3.7);c.weapon.visible=true;}else{state(c,'dodge',3);c.weapon.visible=true;}setFace(c,c.type===0?'cry':c.type===1?'scared':'angry');voice(c,'fear');}effect(58,.6,.13,'triangle');handReach=.6;}
 function dance(){danceStart=time;danceUntil=time+8;for(const c of freeCharacters()){state(c,'cautious',3);c.danceReact=time+3;c.fear=.45;c.weapon.visible=true;setFace(c,'scared');}effect(330,.18,.04);}
@@ -183,7 +174,14 @@ function updateCharacter(c,dt){
  if(s==='held'||s==='juggle'){
   const i=held.indexOf(c),n=held.length;
   let x=(i-(n-1)/2)*(n>1?1.35:0),y=-1.5,z=n>1?-3.5:-2.6;
-  if(s==='juggle'){const u=((time-c.stateAt)/3.8+i/Math.max(1,n))%1,leg=u<.5?u*2:(u-.5)*2,direction=u<.5?1:-1,span=n>1?1.35:.95;x=direction*(-span+span*2*leg);y=-1.65+(c.type===2?.9:1.2)*Math.sin(leg*Math.PI);z=(n>1?-4.1:-3)-Math.sin(leg*Math.PI)*.25;c.rig.rotation.z=Math.sin(u*Math.PI*2)*.18;c.rig.rotation.x=Math.sin(u*Math.PI*2)*.08;const caught=Math.floor((time-c.stateAt)/1.9+i*2/Math.max(1,n));if(c.lastCatch!==caught){c.lastCatch=caught;handReach=.25;effect(190,.09,.025);}if((leg<.02||leg>.98)&&time>c.nextVoice)voice(c,'fear');}
+  if(s==='juggle'){
+   const u=((time-c.stateAt)/3.8+i/Math.max(1,n))%1,leg=u<.5?u*2:(u-.5)*2,direction=u<.5?1:-1,span=n>1?1.35:.95,arc=4*leg*(1-leg);
+   x=direction*(-span+span*2*leg);y=-1.65+(c.type===2?2.75:3.1)*arc;
+   // A taller throw travels away from the hands so the face stays in view.
+   z=(n>1?-4.1:-3)-arc*3.2;setFace(c,'scared');c.fear=1;
+   c.rig.rotation.z=Math.sin(u*Math.PI*2)*.18;c.rig.rotation.x=Math.sin(u*Math.PI*2)*.08;
+   const caught=Math.floor((time-c.stateAt)/1.9+i*2/Math.max(1,n));if(c.lastCatch!==caught){c.lastCatch=caught;handReach=.25;effect(190,.09,.025);}if((leg<.02||leg>.98)&&time>c.nextVoice)voice(c,'fear');
+  }
   else{y+=Math.sin(time*2+i)*.045;c.rig.rotation.z=Math.sin(time*5+i)*.05;}
   const target=new THREE.Vector3(x,y,z).applyQuaternion(camera.quaternion).add(camera.position);c.root.position.lerp(target,Math.min(1,dt*7));facePlayer(c,dt*2);c.weapon.visible=true;
  }else if(s==='eating'){
@@ -224,7 +222,7 @@ function updateCharacter(c,dt){
  const alarm=['cry','scared'].includes(c.face);c.tears.forEach((tear,i)=>{tear.visible=c.type!==2&&(c.face==='cry'||(alarm&&c.type===0));if(tear.visible){tear.position.y=.95-((time*1.1+i*.4)%1)*.34-c.headPivot.position.y;tear.position.z=.52-c.headPivot.position.z;tear.scale.y=.11+Math.sin(time*7)*.025;}});
  c.ears.forEach((ear,i)=>{if(c.type===2)ear.rotation.z=(i===0?-.035:.035)+Math.sin(time*1.7+i)*.025+(alarm?(i===0?-.12:.12):0);});
  const lookDistance=Math.hypot(camera.position.x-c.root.position.x,camera.position.z-c.root.position.z);c.headPivot.rotation.x=lerp(c.headPivot.rotation.x,-clamp(Math.atan2(camera.position.y-c.root.position.y-1.15,Math.max(.5,lookDistance))*.85,-.15,.45),dt*3);
- c.tail.rotation.y=Math.sin(time*2+c.type)*.16;
+ c.tail.rotation.y=Math.sin(time*2+c.type)*.16;updateWeaponGrip(c,time);
 }
 
 function updatePlayer(dt){
@@ -254,4 +252,4 @@ function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-last)/10
 requestAnimationFrame(frame);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.fov=viewFov();camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 // A read-only snapshot makes behavioural verification possible without adding UI.
-window.forestSimulation={get snapshot(){return {time,dancing:time<danceUntil,juggling,held:held.map(c=>c.name),position:camera.position.toArray(),characters:characters.map(c=>({name:c.name,state:c.state,face:c.face,visible:c.root.visible,position:c.root.position.toArray()})),assetSource:'Nini / original published meshes',audioLoaded:[...audioCache.keys()],drawCalls:renderer.info.render.calls};}};
+window.forestSimulation={get snapshot(){return {time,dancing:time<danceUntil,juggling,held:held.map(c=>c.name),position:camera.position.toArray(),characters:characters.map(c=>({name:c.name,state:c.state,face:c.face,visible:c.root.visible,position:c.root.position.toArray(),weapon:weaponGripSnapshot(c)})),assetSource:'Nini / original published meshes',audioLoaded:[...audioCache.keys()],drawCalls:renderer.info.render.calls};}};

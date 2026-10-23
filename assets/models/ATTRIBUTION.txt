@@ -11,14 +11,16 @@ That package credits the three character models to Nini.
 Changes: file conversion to GLB, coordinate convention, uniform scale,
 disconnected-part pivots for animation; reactive facial texture variants.
 The packaged GLB files retain the source geometry. Runtime subdivision smooths
-the imported parts, and body proportions, Hachiware blue and facial glyphs are
+the imported parts, and body proportions, Hachiware blue, Usagi yellow and facial glyphs are
 adjusted to the user-supplied figure photographs. UV seams remain in place.
 The supplied photographs are included only as references for this personal Site.
 
-Closed smiling eye artwork used for Chiikawa and Hachiware:
-Nagano original illustration, March 2022
-https://pbs.twimg.com/media/FNEsouhVIAUGqOs?format=jpg&name=large
-Usagi keeps the original model's expression when following.
+Current calm, smiling and frightened facial glyphs are extracted from the
+user-supplied figure photographs. Usagi uses the supplied Usagi photograph
+and keeps that base expression in every state, including juggling and eating.
+Weapons and palm/arm grip poses are constructed for this simulation. Each
+sasumata has six inward-facing white spikes; Usagi has a yellow, white-tipped
+staff held in both hands.
 
 Characters and underlying artwork: © nagano / chiikawa committee.
 Unofficial, noncommercial, personal fan simulation.
