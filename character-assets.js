@@ -44,7 +44,7 @@ export function applyExpression(c,expression){
  const x=c.faceContext;x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,2048,2048);x.drawImage(c.atlasCanvas,0,0);
  const name=c.type===1&&['sad','cry'].includes(expression)?'sad':expression==='happy'?'happy':['scared','cry','angry','sad'].includes(expression)?'scared':'calm',glyph=c.glyphs[name];if(c.type===2)x.clearRect(1236,1576,642,289);else x.clearRect(c.type===0?209:1028,432,642,282);
  for(let i=0;i<2;i++){const [l,t,r,b]=eyeBoxes[c.type][i],w=r-l,h=b-t,drawH=name==='happy'?38:h;x.drawImage(glyph.eyes[i],l,(t+b-drawH)/2,w,drawH);const [bl,bt,br,bb]=browBoxes[c.type][i];x.drawImage(glyph.brows[i],bl,bt,br-bl,bb-bt);}
- x.clearRect(...(c.type===0?[404,179,240,187]:c.type===1?[1203,212,297,198]:[1419,1190,297,368]));x.drawImage(glyph.mouth,...(name==='sad'?[1316,252,100,98]:mouths[c.type]));
+ x.clearRect(...(c.type===0?[404,179,240,187]:c.type===1?[1203,212,297,198]:[1419,1190,297,368]));x.drawImage(glyph.mouth,...(name==='sad'?[1277,220,180,164]:mouths[c.type]));
  if(expression==='sad'&&c.type===0){
   const [ml,mt,mw,mh]=mouths[c.type];x.clearRect(ml-5,mt-5,mw+10,mh+10);x.strokeStyle='#3d2322';x.lineWidth=11;x.lineCap='round';
   x.beginPath();x.moveTo(ml+mw*.25,mt+mh*.58);x.quadraticCurveTo(ml+mw*.5,mt+mh*.25,ml+mw*.75,mt+mh*.58);x.stroke();

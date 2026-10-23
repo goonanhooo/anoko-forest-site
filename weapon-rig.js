@@ -38,13 +38,18 @@ function poseArm(c,index,grip){
 }
 
 export function updateWeaponGrip(c,time){
+ const struggling=['held','juggle','eating'].includes(c.state),phase=time*7.2+c.type*1.6;
  if(c.type===2){
-  c.weapon.position.set(0,.55,.39);c.weapon.quaternion.setFromUnitVectors(UP,new THREE.Vector3(1,.28,0).normalize());
+  c.weapon.position.set(struggling?Math.sin(phase)*.075:0,.55+(struggling?Math.sin(phase*.83)*.085:0),.39);
+  c.weapon.quaternion.setFromUnitVectors(UP,new THREE.Vector3(1,.28,0).normalize());
+  if(struggling)c.weapon.quaternion.premultiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.sin(phase*.75)*.32,Math.sin(phase*.64)*.18,Math.sin(phase)*.34)));
   const axis=UP.clone().applyQuaternion(c.weapon.quaternion);for(let i=0;i<2;i++){const grip=c.weapon.position.clone().addScaledVector(axis,i===0?-.255:.255);poseArm(c,i,grip);}
  }else{
   const defending=c.state==='defend',nervous=['cautious','defend','flee','trip'].includes(c.state),shake=nervous?Math.sin(time*8)*.016:Math.sin(time*1.7)*.006;
-  c.weapon.position.set(.57,.64,.31);c.weapon.rotation.set(defending?.50:.08,0,-.45+shake);poseArm(c,1,c.weapon.position);
+  c.weapon.position.set(.57+(struggling?Math.sin(phase*.82)*.07:0),.64+(struggling?Math.sin(phase)*.10:0),.31+(struggling?Math.cos(phase*.72)*.04:0));
+  c.weapon.rotation.set(defending?.50:.08+(struggling?Math.sin(phase*.78)*.38:0),struggling?Math.sin(phase*.65)*.25:0,-.45+shake+(struggling?Math.sin(phase)*.44:0));poseArm(c,1,c.weapon.position);
   c.gripHands[0].visible=false;c.arms[0].position.copy(c.armRest[0].position);c.arms[0].scale.copy(c.armRest[0].scale);
+  if(struggling)c.arms[0].rotation.x=Math.sin(phase+1)*.75;c.arms[0].rotation.z=struggling?Math.sin(phase*.8)*.25:0;
  }
 }
 

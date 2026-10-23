@@ -135,7 +135,7 @@ function voice(c,kind='fear',force=false){
  const source=audioContext.createBufferSource();source.buffer=buffer;const p=audioContext.createStereoPanner(),g=audioContext.createGain();tmp.copy(c.root.position).sub(camera.position);const dist=tmp.length(),side=tmp.x*Math.cos(yaw)-tmp.z*Math.sin(yaw);p.pan.value=clamp(side/7,-.8,.8);g.gain.value=.65*clamp(1-dist/30,.15,1);source.connect(p).connect(g).connect(master);source.start();activeVoices.add(source);source.onended=()=>activeVoices.delete(source);c.nextVoice=time+5;voiceBusyUntil=time+Math.min(buffer.duration,3.5)+.6;
 }
 
-function setFace(c,expression){if(c.type===2)expression='calm';else if((c.type===1&&c.state==='juggle')||(time<c.griefUntil&&c.state!=='eating'))expression='sad';if(c.face===expression)return;applyExpression(c,expression);c.face=expression;}
+function setFace(c,expression){if(c.type===2)expression='calm';else if(['held','juggle','eating'].includes(c.state))expression=c.type===1?'sad':'cry';else if(time<c.griefUntil)expression='sad';if(c.face===expression)return;applyExpression(c,expression);c.face=expression;}
 function state(c,next,duration=0){c.state=next;c.stateAt=time;c.until=time+duration;}
 function freeCharacters(){return characters.filter(c=>!['held','juggle','eating','eaten','thrown'].includes(c.state));}
 function nearestTarget(){const dir=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);let best=null,score=1e9;for(const c of freeCharacters()){tmp.copy(c.root.position).add(new THREE.Vector3(0,.95,0)).sub(camera.position);const dist=tmp.length(),dot=tmp.clone().normalize().dot(dir);if(dist<7.8&&dot>.8){const s=dist+(1-dot)*12;if(s<score){score=s;best=c;}}}return best;}
@@ -205,7 +205,9 @@ function updateCharacter(c,dt){
  if(['idle','curious','cautious','follow'].includes(c.state)&&time>c.safeUntil&&time>danceUntil&&(ongoingThreat||groundDist<(c.fear>.4?8:6.8))){startFlee(c,8);voice(c,'fear');}
  const t=time-c.stateAt,s=c.state;
  let walk=0,bob=0;
- c.root.scale.setScalar(1);c.rig.rotation.y=lerp(c.rig.rotation.y,0,dt*5);c.rig.rotation.x=lerp(c.rig.rotation.x,0,dt*5);c.rig.rotation.z=lerp(c.rig.rotation.z,0,dt*5);c.rig.position.y=0;
+ c.root.scale.setScalar(1);c.rig.position.set(0,0,0);
+ const grounded=!['held','juggle','eating','thrown','trip'].includes(s);
+ if(grounded){c.root.rotation.x=c.root.rotation.z=0;c.rig.rotation.set(0,0,0);}else{c.rig.rotation.y=lerp(c.rig.rotation.y,0,dt*5);c.rig.rotation.x=lerp(c.rig.rotation.x,0,dt*5);c.rig.rotation.z=lerp(c.rig.rotation.z,0,dt*5);}
  if(s==='held'||s==='juggle'){
   const i=held.indexOf(c),n=held.length;
   let x=(i-(n-1)/2)*(n>1?1.35:0),y=-1.5,z=n>1?-3.5:-2.6;
@@ -224,18 +226,17 @@ function updateCharacter(c,dt){
   c.velocity.y-=5*dt;c.root.position.addScaledVector(c.velocity,dt);c.rig.rotation.z+=dt*1.4;facePlayer(c,dt);
   if(c.root.position.y<=.03){c.root.position.y=0;state(c,'trip',2.8);setFace(c,'cry');effect(125,.16,.07);}
  }else if(s==='trip'){
-  c.rig.rotation.z=lerp(c.rig.rotation.z,c.type===2?-.7:-1.2,Math.min(1,dt*7));c.rig.position.y=.63;c.weapon.visible=true;setFace(c,c.type===2?'dizzy':'cry');
-  if(t>2.1){const recovery=1-clamp((t-2.1)/.7,0,1);c.rig.rotation.z*=recovery;c.rig.position.y*=recovery;}
+  const stumble=THREE.MathUtils.smoothstep(t,0,.18)*(1-THREE.MathUtils.smoothstep(t,.65,1.55));c.rig.rotation.set(0,0,(c.type===2?-.7:-.95)*stumble);c.rig.position.y=.42*stumble;c.weapon.visible=true;setFace(c,c.type===2?'dizzy':'cry');
   if(time>c.until){if(time<c.threatUntil)startFlee(c,7);else{state(c,'cautious',4);setFace(c,'scared');}}
  }else if(s==='cautious'){
-  facePlayer(c,dt);c.rig.rotation.z=Math.sin(time*12+c.type)*.012;c.weapon.rotation.z=-.35+Math.sin(time*4)*.04;
+  facePlayer(c,dt);c.weapon.rotation.z=-.35+Math.sin(time*4)*.04;
   if(time>=c.until){if(c.danceReact>c.stateAt-.1&&time-c.danceReact<2){state(c,'follow',120);c.fear=0;c.griefUntil=0;c.safeUntil=time+120;setFace(c,'happy');c.weapon.visible=true;voice(c,'happy');}else{state(c,'idle');setFace(c,'calm');c.weapon.visible=true;}}
  }else if(s==='follow'){
   setFace(c,'happy');c.weapon.visible=true;const side=(c.type-1)*1.9,forward=4.2+(c.type===1?.15:0),target=new THREE.Vector3(camera.position.x-Math.sin(yaw)*forward+Math.cos(yaw)*side,0,camera.position.z-Math.cos(yaw)*forward-Math.sin(yaw)*side);
   if(moveCharacter(c,target,.72+c.type*.04,dt))walk=1;facePlayer(c,dt*2);bob=Math.abs(Math.sin(time*4.5+c.type))*.055;
   if(time>c.nextVoice&&time>voiceNext){voice(c,'happy');voiceNext=time+16;}
  }else if(s==='mourn'){
-  facePlayer(c,dt*2);c.rig.rotation.z=Math.sin(time*9+c.type)*.035;c.rig.position.y=-Math.abs(Math.sin(time*5))*.035;c.weapon.visible=true;
+  facePlayer(c,dt*2);c.weapon.visible=true;
   if(time>c.until)startFlee(c,11);
  }else if(s==='flee'){
   const destination=escapeTarget(c.root.position,camera.position,trees,time,c.type,c.escapeSide),target=new THREE.Vector3(destination.x,0,destination.z);
@@ -251,9 +252,9 @@ function updateCharacter(c,dt){
   const target=c.home.clone().add(new THREE.Vector3(Math.sin(t*1.1)*2,0,-1.1));moveCharacter(c,target,1.8,dt);facePlayer(c,dt*2);walk=1.4;bob=Math.abs(Math.sin(t*4))*.24;c.weapon.visible=true;setFace(c,'angry');
   if(time>c.until)startFlee(c,10);
  }else{
-  c.fear=Math.max(0,c.fear-dt*.06);facePlayer(c,dt*.7);c.rig.rotation.z=Math.sin(time*.9+c.type*2)*.018;bob=Math.sin(time*1.5+c.type)*.012;
+  c.fear=Math.max(0,c.fear-dt*.06);facePlayer(c,dt*.7);bob=0;
   if(time>c.nextIdle){c.nextIdle=time+rng(7,14);if(c.type===0&&dist<4.1){state(c,'cautious',3);setFace(c,'scared');}else if(c.type===2){state(c,'curious',2.5);setFace(c,'calm');}else{setFace(c,Math.random()<.5?'happy':'calm');if(Math.random()<.35)voice(c,'idle');}}
-  if(s==='curious'){c.rig.rotation.z=Math.sin(t*1.1)*.12;if(time>c.until)state(c,'idle');}
+  if(s==='curious'&&time>c.until)state(c,'idle');
  }
  if(!['held','juggle','eating','thrown'].includes(s))c.root.position.y=bob;
  if(walk){for(let i=0;i<2;i++){c.feet[i].position.y=c.footRest[i]+Math.max(0,Math.sin(time*7*walk+i*Math.PI))*.1;c.arms[i].rotation.x=Math.sin(time*7*walk+i*Math.PI)*.35;}}else{for(let i=0;i<2;i++){c.feet[i].position.y=c.footRest[i];if(s!=='defend')c.arms[i].rotation.x=lerp(c.arms[i].rotation.x,held.includes(c)?-.6:0,dt*4);}}
