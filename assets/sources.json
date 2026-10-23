@@ -53,7 +53,7 @@
     "geometry": "Imported original GLB meshes with runtime Loop subdivision and proportion refinements based on user-supplied figure photographs.",
     "smile_behavior": "Chiikawa and Hachiware use photo-derived calm, smiling and frightened expressions. Usagi always keeps the photo-derived base face, including scared, held, juggling and eating states.",
     "expression_reference": "User-supplied Chiikawa, Hachiware and Usagi figure photographs, 2026-10-23",
-    "expression_modifications": "Chiikawa sadness uses worried eyebrows and a downturned mouth. Hachiware crying eyes, eyebrows and small mouth are extracted directly from the additional user-supplied crying illustration and used when a friend is eaten, while crying and throughout juggling. Both share the same flowing 3D tear effect. Usagi keeps its fixed photo-derived face.",
+    "expression_modifications": "Chiikawa sadness and crying both use the crying eyes, eyebrows and mouth from the supplied figure photograph. No separately drawn line mouth is used. Hachiware crying eyes, eyebrows and small mouth are extracted directly from the additional user-supplied crying illustration and used when a friend is eaten, while crying and throughout juggling. Both share the same flowing 3D tear effect. Usagi keeps its fixed photo-derived face.",
     "hachiware_cry_reference": "User-supplied Hachiware crying illustration, 2026-10-23"
   },
   "weapon_reference": "https://chiikawamarket.jp/products/4589468443698",

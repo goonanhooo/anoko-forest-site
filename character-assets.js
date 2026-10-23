@@ -45,11 +45,6 @@ export function applyExpression(c,expression){
  const name=c.type===1&&['sad','cry'].includes(expression)?'sad':expression==='happy'?'happy':['scared','cry','angry','sad'].includes(expression)?'scared':'calm',glyph=c.glyphs[name];if(c.type===2)x.clearRect(1236,1576,642,289);else x.clearRect(c.type===0?209:1028,432,642,282);
  for(let i=0;i<2;i++){const [l,t,r,b]=eyeBoxes[c.type][i],w=r-l,h=b-t,drawH=name==='happy'?38:h;x.drawImage(glyph.eyes[i],l,(t+b-drawH)/2,w,drawH);const [bl,bt,br,bb]=browBoxes[c.type][i];x.drawImage(glyph.brows[i],bl,bt,br-bl,bb-bt);}
  x.clearRect(...(c.type===0?[404,179,240,187]:c.type===1?[1203,212,297,198]:[1419,1190,297,368]));x.drawImage(glyph.mouth,...(name==='sad'?[1277,220,180,164]:mouths[c.type]));
- if(expression==='sad'&&c.type===0){
-  const [ml,mt,mw,mh]=mouths[c.type];x.clearRect(ml-5,mt-5,mw+10,mh+10);x.strokeStyle='#3d2322';x.lineWidth=11;x.lineCap='round';
-  x.beginPath();x.moveTo(ml+mw*.25,mt+mh*.58);x.quadraticCurveTo(ml+mw*.5,mt+mh*.25,ml+mw*.75,mt+mh*.58);x.stroke();
-  for(let i=0;i<2;i++){const [l,t,r,b]=browBoxes[c.type][i];x.clearRect(l-4,t-4,r-l+8,b-t+8);x.beginPath();x.moveTo(l,t+(b-t)*(i===0?.75:.2));x.quadraticCurveTo((l+r)/2,t+(b-t)*.15,r,t+(b-t)*(i===0?.2:.75));x.stroke();}
- }
  if(expression==='dizzy')for(const [l,t,r,b]of eyeBoxes[c.type]){x.clearRect(l-4,t-4,r-l+8,b-t+8);x.strokeStyle='#3d2322';x.lineWidth=10;x.lineCap='round';x.beginPath();for(let j=0;j<65;j++){const a=j*.28,rad=j*.6,px=(l+r)/2+Math.cos(a)*rad,py=(t+b)/2+Math.sin(a)*rad;if(!j)x.moveTo(px,py);else x.lineTo(px,py);}x.stroke();}
  c.faceTexture.needsUpdate=true;c.faceMaterial.map=c.faceTexture;c.faceMaterial.needsUpdate=true;
 }
