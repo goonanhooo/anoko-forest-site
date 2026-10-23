@@ -18,6 +18,8 @@ The supplied photographs are included only as references for this personal Site.
 Current calm, smiling and frightened facial glyphs are extracted from the
 user-supplied figure photographs. Usagi uses the supplied Usagi photograph
 and keeps that base expression in every state, including juggling and eating.
+A sad reaction adds worried eyebrows, a downturned mouth and animated tears
+for Chiikawa and Hachiware when a friend is eaten.
 Weapons and palm/arm grip poses are constructed for this simulation. Each
 sasumata has six inward-facing white spikes; Usagi has a yellow, white-tipped
 staff held in both hands.

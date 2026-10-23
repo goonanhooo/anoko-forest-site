@@ -52,7 +52,8 @@
     ],
     "geometry": "Imported original GLB meshes with runtime Loop subdivision and proportion refinements based on user-supplied figure photographs.",
     "smile_behavior": "Chiikawa and Hachiware use photo-derived calm, smiling and frightened expressions. Usagi always keeps the photo-derived base face, including scared, held, juggling and eating states.",
-    "expression_reference": "User-supplied Chiikawa, Hachiware and Usagi figure photographs, 2026-10-23"
+    "expression_reference": "User-supplied Chiikawa, Hachiware and Usagi figure photographs, 2026-10-23",
+    "expression_modifications": "Added worried eyebrows and a downturned mouth over the photo-derived eyes for sadness when a friend is eaten; animated tears and lowered head. Usagi keeps its fixed photo-derived face."
   },
   "weapon_reference": "https://chiikawamarket.jp/products/4589468443698",
   "weapon_modifications": "Six white spikes anchored to the inner fork surface on each sasumata. Usagi carries a yellow staff with white tips. Visible palms are constrained to shaft grip points through all animation states."
