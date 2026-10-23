@@ -110,7 +110,7 @@ const names=['치이카와','하치와레','우사기'];
 async function createCharacter(type,x,z){
  const asset=await loadCharacterAsset(type);
  const root=new THREE.Group(),rig=new THREE.Group();root.add(rig);rig.add(asset.model);root.position.set(x,0,z);scene.add(root);
- const tears=[];for(const side of [-1,1]){const t=ball(rig,tearMat,[side*.27,1.12,.52],[.033,.12,.025]);t.visible=false;t.castShadow=false;tears.push(t);}
+ const tears=[];for(const side of [-1,1]){const t=ball(rig,tearMat,[side*.27,1.12,.52],[.033,.12,.025]);asset.headPivot.attach(t);t.visible=false;t.castShadow=false;tears.push(t);}
  const weapon=spear(type,asset.arms[1]);weapon.visible=true;
  const c={...asset,type,name:names[type],root,rig,tears,weapon,state:'idle',stateAt:0,until:0,home:new THREE.Vector3(x,0,z),velocity:new THREE.Vector3(),fear:0,tripAt:100,nextIdle:rng(4,9),nextVoice:0,face:'calm',followOffset:0,eatAt:0,danceReact:0};characters[type]=c;return c;
 }
@@ -143,14 +143,14 @@ function voice(c,kind='fear',force=false){
  const source=audioContext.createBufferSource();source.buffer=buffer;const p=audioContext.createStereoPanner(),g=audioContext.createGain();tmp.copy(c.root.position).sub(camera.position);const dist=tmp.length(),side=tmp.x*Math.cos(yaw)-tmp.z*Math.sin(yaw);p.pan.value=clamp(side/7,-.8,.8);g.gain.value=.65*clamp(1-dist/30,.15,1);source.connect(p).connect(g).connect(master);source.start();activeVoices.add(source);source.onended=()=>activeVoices.delete(source);c.nextVoice=time+5;voiceBusyUntil=time+Math.min(buffer.duration,3.5)+.6;
 }
 
-function setFace(c,expression){if(c.type===2&&expression==='happy')expression='calm';if(c.face===expression)return;applyExpression(c,expression);c.face=expression;}
+function setFace(c,expression){if(c.type===2)expression='calm';if(c.face===expression)return;applyExpression(c,expression);c.face=expression;}
 function state(c,next,duration=0){c.state=next;c.stateAt=time;c.until=time+duration;}
 function freeCharacters(){return characters.filter(c=>!['held','juggle','eating','eaten','thrown'].includes(c.state));}
 function nearestTarget(){const dir=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);let best=null,score=1e9;for(const c of freeCharacters()){tmp.copy(c.root.position).add(new THREE.Vector3(0,.95,0)).sub(camera.position);const dist=tmp.length(),dot=tmp.clone().normalize().dot(dir);if(dist<7.8&&dot>.8){const s=dist+(1-dot)*12;if(s<score){score=s;best=c;}}}return best;}
 function grab(){const c=nearestTarget();if(!c||held.length>=3){if(!c&&held.length)release(false);return;}state(c,juggling?'juggle':'held');held.push(c);c.weapon.visible=true;c.fear=1;setFace(c,c.type===2?'angry':'scared');voice(c,'fear',true);handReach=1;effect(250,.16,.08);}
 function release(toss=false){if(!held.length)return;const c=held.pop();c.root.scale.setScalar(1);c.rig.rotation.set(0,0,0);c.root.rotation.x=0;const dir=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);c.velocity.copy(dir).multiplyScalar(toss?3.6:.7);c.velocity.y=toss?2.6:.2;state(c,'thrown');setFace(c,'scared');effect(220,.25,.05);if(!held.length)juggling=false;}
 function toggleJuggle(){if(!held.length)grab();if(!held.length)return;juggling=!juggling;held.forEach(c=>{state(c,juggling?'juggle':'held');setFace(c,juggling?'dizzy':'scared');});effect(juggling?600:400,.2);}
-function eat(){if(!held.length){grab();if(!held.length)return;}const c=held.pop();state(c,'eating');c.eatAt=time;c.eatFrom=c.root.position.clone();voice(c,'fear',true);document.body.classList.add('eating');setTimeout(()=>document.body.classList.remove('eating'),1100);effect(105,.55,.2);if(!held.length)juggling=false;}
+function eat(){if(characters.some(c=>c.state==='eating'))return;if(!held.length){grab();if(!held.length)return;}const c=held.pop();state(c,'eating');c.eatAt=time;c.eatFrom=c.root.position.clone();setFace(c,'scared');voice(c,'fear',true);document.body.classList.add('eating');setTimeout(()=>document.body.classList.remove('eating'),2600);setTimeout(()=>effect(125,.22,.13),1100);setTimeout(()=>effect(85,.28,.11),1550);setTimeout(()=>effect(58,.42,.13),2000);if(!held.length)juggling=false;}
 function scare(){danceUntil=-100;for(const c of freeCharacters()){c.fear=1;if(c.type===0){state(c,'flee',7);c.tripAt=time+1.8;}else if(c.type===1){state(c,'defend',3.7);c.weapon.visible=true;}else{state(c,'dodge',3);c.weapon.visible=true;}setFace(c,c.type===0?'cry':c.type===1?'scared':'angry');voice(c,'fear');}effect(58,.6,.13,'triangle');handReach=.6;}
 function dance(){danceStart=time;danceUntil=time+8;for(const c of freeCharacters()){state(c,'cautious',3);c.danceReact=time+3;c.fear=.45;c.weapon.visible=true;setFace(c,'scared');}effect(330,.18,.04);}
 function pet(){const c=nearestTarget()||held.at(-1);if(!c)return;petUntil=time+1.4;c.fear=0;setFace(c,'happy');voice(c,'happy');if(!held.includes(c))state(c,'follow',40);effect(730,.12,.025);}
@@ -163,7 +163,7 @@ addEventListener('keydown',e=>{
 });
 addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>keys.clear());
 let mouseDown=false,mouseMoved=false,lastX=0,lastY=0;
-canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;initAudio();mouseDown=true;mouseMoved=false;lastX=e.clientX;lastY=e.clientY;if(document.pointerLockElement===canvas){if(e.button===0)grab();else if(e.button===2)release(false);}else if(e.button===0){try{const p=canvas.requestPointerLock();if(p?.catch)p.catch(()=>{});}catch{}}});
+canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;initAudio();mouseDown=true;mouseMoved=false;lastX=e.clientX;lastY=e.clientY;if(e.button===2){eat();return;}if(e.button===1){e.preventDefault();toggleJuggle();return;}if(e.button===0){grab();if(document.pointerLockElement!==canvas)try{const p=canvas.requestPointerLock();if(p?.catch)p.catch(()=>{});}catch{}}});
 addEventListener('pointerup',()=>mouseDown=false);
 addEventListener('mousemove',e=>{if(document.pointerLockElement===canvas){yaw-=e.movementX*.0021;pitch-=e.movementY*.0018;}else if(mouseDown){yaw-=(e.clientX-lastX)*.003;pitch-=(e.clientY-lastY)*.003;lastX=e.clientX;lastY=e.clientY;mouseMoved=true;}pitch=clamp(pitch,-1.1,.82);});
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
@@ -183,11 +183,12 @@ function updateCharacter(c,dt){
  if(s==='held'||s==='juggle'){
   const i=held.indexOf(c),n=held.length;
   let x=(i-(n-1)/2)*(n>1?1.35:0),y=-1.5,z=n>1?-3.5:-2.6;
-  if(s==='juggle'){const u=((time-c.stateAt)/3.2+i/Math.max(1,n))%1;x=-1.15+2.3*u;y=-1.5+2.45*4*u*(1-u);z=-3.6; c.rig.rotation.z=Math.sin(u*Math.PI*2)*.28;c.rig.rotation.x=Math.sin(u*Math.PI*2)*.12;if((u<.02||u>.98)&&time>c.nextVoice)voice(c,'fear');}
+  if(s==='juggle'){const u=((time-c.stateAt)/3.8+i/Math.max(1,n))%1,leg=u<.5?u*2:(u-.5)*2,direction=u<.5?1:-1,span=n>1?1.35:.95;x=direction*(-span+span*2*leg);y=-1.65+(c.type===2?.9:1.2)*Math.sin(leg*Math.PI);z=(n>1?-4.1:-3)-Math.sin(leg*Math.PI)*.25;c.rig.rotation.z=Math.sin(u*Math.PI*2)*.18;c.rig.rotation.x=Math.sin(u*Math.PI*2)*.08;const caught=Math.floor((time-c.stateAt)/1.9+i*2/Math.max(1,n));if(c.lastCatch!==caught){c.lastCatch=caught;handReach=.25;effect(190,.09,.025);}if((leg<.02||leg>.98)&&time>c.nextVoice)voice(c,'fear');}
   else{y+=Math.sin(time*2+i)*.045;c.rig.rotation.z=Math.sin(time*5+i)*.05;}
   const target=new THREE.Vector3(x,y,z).applyQuaternion(camera.quaternion).add(camera.position);c.root.position.lerp(target,Math.min(1,dt*7));facePlayer(c,dt*2);c.weapon.visible=true;
  }else if(s==='eating'){
-  const u=clamp(t/1.05,0,1),target=new THREE.Vector3(0,-.1,-.13).applyQuaternion(camera.quaternion).add(camera.position);c.root.position.lerpVectors(c.eatFrom,target,u*u);c.root.scale.setScalar(1-u*.95);c.rig.rotation.z=Math.sin(u*8)*.18;if(u>=1){c.root.visible=false;state(c,'eaten');}
+  const lift=THREE.MathUtils.smoothstep(t,.55,1.9),grip=new THREE.Vector3(0,-1.48,-2.55).applyQuaternion(camera.quaternion).add(camera.position),mouth=new THREE.Vector3(0,-1.15,-.1).applyQuaternion(camera.quaternion).add(camera.position),target=grip.lerp(mouth,lift);
+  if(t<.55)c.root.position.lerpVectors(c.eatFrom,target,THREE.MathUtils.smoothstep(t,0,.55));else c.root.position.copy(target);c.root.scale.setScalar(1-THREE.MathUtils.smoothstep(t,1.55,2.35)*.98);c.rig.rotation.z=Math.sin(t*7)*.07;facePlayer(c,dt*2);if(t>=2.35){c.root.visible=false;state(c,'eaten');}
  }else if(s==='thrown'){
   c.velocity.y-=5*dt;c.root.position.addScaledVector(c.velocity,dt);c.rig.rotation.z+=dt*1.4;facePlayer(c,dt);
   if(c.root.position.y<=.03){c.root.position.y=0;state(c,'trip',2.8);setFace(c,'cry');effect(125,.16,.07);}
@@ -220,8 +221,9 @@ function updateCharacter(c,dt){
  }
  if(!['held','juggle','eating','thrown'].includes(s))c.root.position.y=bob;
  if(walk){for(let i=0;i<2;i++){c.feet[i].position.y=c.footRest[i]+Math.max(0,Math.sin(time*7*walk+i*Math.PI))*.1;c.arms[i].rotation.x=Math.sin(time*7*walk+i*Math.PI)*.35;}}else{for(let i=0;i<2;i++){c.feet[i].position.y=c.footRest[i];if(s!=='defend')c.arms[i].rotation.x=lerp(c.arms[i].rotation.x,held.includes(c)?-.6:0,dt*4);}}
- const alarm=['cry','scared'].includes(c.face);c.tears.forEach((tear,i)=>{tear.visible=c.face==='cry'||(alarm&&c.type===0);if(tear.visible){tear.position.y=.95-((time*1.1+i*.4)%1)*.34;tear.position.z=.52;tear.scale.y=.11+Math.sin(time*7)*.025;}});
+ const alarm=['cry','scared'].includes(c.face);c.tears.forEach((tear,i)=>{tear.visible=c.type!==2&&(c.face==='cry'||(alarm&&c.type===0));if(tear.visible){tear.position.y=.95-((time*1.1+i*.4)%1)*.34-c.headPivot.position.y;tear.position.z=.52-c.headPivot.position.z;tear.scale.y=.11+Math.sin(time*7)*.025;}});
  c.ears.forEach((ear,i)=>{if(c.type===2)ear.rotation.z=(i===0?-.035:.035)+Math.sin(time*1.7+i)*.025+(alarm?(i===0?-.12:.12):0);});
+ const lookDistance=Math.hypot(camera.position.x-c.root.position.x,camera.position.z-c.root.position.z);c.headPivot.rotation.x=lerp(c.headPivot.rotation.x,-clamp(Math.atan2(camera.position.y-c.root.position.y-1.15,Math.max(.5,lookDistance))*.85,-.15,.45),dt*3);
  c.tail.rotation.y=Math.sin(time*2+c.type)*.16;
 }
 
@@ -238,7 +240,8 @@ function updatePlayer(dt){
  handReach=lerp(handReach,0,dt*4);
  for(let i=0;i<2;i++){const s=i===0?-1:1,h=hands[i];let x=s*1.04,y=-.94,z=-1.4,rz=s*.12;
   if(dancing){x=s*(1+Math.sin(danceTime*1.7)*.35);y=-.65+Math.sin(danceTime*3.4+i*Math.PI)*.33;z=-1.55;rz=s*.32+Math.sin(danceTime*1.7)*.4;}
-  else if(juggling){y=-.9+Math.sin(time*3.92+i*Math.PI)*.24;x=s*1.05;z=-1.8;rz=Math.sin(time*3.92+i*Math.PI)*.13;}
+  else if(characters.some(c=>c.state==='eating')){const eater=characters.find(c=>c.state==='eating'),lift=THREE.MathUtils.smoothstep(time-eater.eatAt,.55,1.9);x=s*lerp(.63,.38,lift);y=lerp(-1.08,-.28,lift);z=lerp(-1.95,-.45,lift);rz=s*.25;}
+  else if(juggling){const clock=(time-held[0].stateAt)/3.8*Math.PI*2;y=-1.0+Math.sin(clock+i*Math.PI)*.2;x=s*.86;z=-2.1;rz=Math.sin(clock+i*Math.PI)*.18;}
   else if(held.length){y=-1.1;x=s*.76;z=-1.9;rz=s*.22;}
   else{y+=Math.sin(time*1.5+i*.4)*.025;if(time<petUntil){y+=.45+Math.sin(time*7)*.1;z=-2.1;}}
   const narrow=clamp(camera.aspect/1.15,.52,1);x*=narrow;h.scale.setScalar(narrow);y+=handReach*.18;z-=handReach*.4;h.position.lerp(new THREE.Vector3(x,y,z),Math.min(1,dt*8));h.rotation.z=lerp(h.rotation.z,rz,dt*7);h.rotation.x=Math.sin(time*1.5+i)*.018;

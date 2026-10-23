@@ -50,9 +50,10 @@
       "models/hachiware.glb",
       "models/usagi.glb"
     ],
-    "geometry": "Original imported meshes, UVs and normals. Only coordinates, uniform scale and disconnected-part pivots converted.",
+    "geometry": "Imported original GLB meshes with runtime Loop subdivision and proportion refinements based on user-supplied figure photographs.",
     "smile_eyes_source": "https://pbs.twimg.com/media/FNEsouhVIAUGqOs?format=jpg&name=large",
-    "smile_behavior": "Usagi keeps original expression; only Chiikawa and Hachiware use closed smiling eyes."
+    "smile_behavior": "Usagi always keeps the original face, including scared, held, juggling and eating states.",
+    "expression_reference": "User-supplied Chiikawa and Hachiware figure photographs, 2026-10-23"
   },
   "weapon_reference": "https://chiikawamarket.jp/products/4589468443698"
 }

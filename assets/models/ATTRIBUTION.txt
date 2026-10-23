@@ -10,7 +10,10 @@ That package credits the three character models to Nini.
 
 Changes: file conversion to GLB, coordinate convention, uniform scale,
 disconnected-part pivots for animation; reactive facial texture variants.
-Original triangles, UVs, normals, base textures and proportions are retained.
+The packaged GLB files retain the source geometry. Runtime subdivision smooths
+the imported parts, and body proportions, Hachiware blue and facial glyphs are
+adjusted to the user-supplied figure photographs. UV seams remain in place.
+The supplied photographs are included only as references for this personal Site.
 
 Closed smiling eye artwork used for Chiikawa and Hachiware:
 Nagano original illustration, March 2022
