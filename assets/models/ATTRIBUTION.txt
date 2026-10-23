@@ -1,0 +1,21 @@
+Chiikawa and friends — Nini (@doniisw)
+https://sketchfab.com/3d-models/chiikawa-and-friends-4c156cab855e451481829d25f4cf3bb1
+Creative Commons Attribution-NonCommercial 4.0 International
+https://creativecommons.org/licenses/by-nc/4.0/
+
+Mesh and original facial atlas sourced from the publicly distributed
+ChiikawaValuables v2.0.0 package by Dumbapple:
+https://thunderstore.io/c/repo/p/Dumbapple/ChiikawaValuables/v/2.0.0/
+That package credits the three character models to Nini.
+
+Changes: file conversion to GLB, coordinate convention, uniform scale,
+disconnected-part pivots for animation; reactive facial texture variants.
+Original triangles, UVs, normals, base textures and proportions are retained.
+
+Closed smiling eye artwork used for Chiikawa and Hachiware:
+Nagano original illustration, March 2022
+https://pbs.twimg.com/media/FNEsouhVIAUGqOs?format=jpg&name=large
+Usagi keeps the original model's expression when following.
+
+Characters and underlying artwork: © nagano / chiikawa committee.
+Unofficial, noncommercial, personal fan simulation.

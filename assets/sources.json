@@ -1,16 +1,58 @@
 {
   "project": "아노코의 숲 — 비공식 개인용 팬 시뮬레이터",
-  "character_reference": ["https://www.anime-chiikawa.jp/chara.html", "https://www.chiikawaofficial.com/characters", "https://chiikawamarket.jp/collections/anoko"],
+  "character_reference": [
+    "https://www.anime-chiikawa.jp/chara.html",
+    "https://www.chiikawaofficial.com/characters",
+    "https://chiikawamarket.jp/collections/anoko"
+  ],
   "character_rights": "© nagano / chiikawa committee",
   "audio_note": "짧은 사용자 업로드 음성 클립. 원작 권리는 각 권리자에게 있습니다. 공식 제공 게임 음원이 아닙니다.",
   "audio": [
-    {"file":"chiikawa-iya.mp3","source":"https://www.myinstants.com/en/instant/chiikawa-iya-89838/","line":"イヤ、イヤ、イヤ～！"},
-    {"file":"hachiware-oi.mp3","source":"https://www.myinstants.com/en/search/?name=hachiware","clip":"Hachiware - Oi"},
-    {"file":"hachiware-nani.mp3","source":"https://www.myinstants.com/en/search/?name=hachiware","clip":"Nani nani?"},
-    {"file":"usagi-yaha.mp3","source":"https://www.myinstants.com/en/search/?name=chiikawa","clip":"usagi yahaaaaaa"},
-    {"file":"usagi-huh.mp3","source":"https://www.myinstants.com/en/search/?name=chiikawa","clip":"Chiikawa usagi huh"},
-    {"file":"usagi-una.mp3","source":"https://www.myinstants.com/en/search/?name=chiikawa","clip":"chiikawa usagi una"}
+    {
+      "file": "chiikawa-iya.mp3",
+      "source": "https://www.myinstants.com/en/instant/chiikawa-iya-89838/",
+      "line": "イヤ、イヤ、イヤ～！"
+    },
+    {
+      "file": "hachiware-oi.mp3",
+      "source": "https://www.myinstants.com/en/search/?name=hachiware",
+      "clip": "Hachiware - Oi"
+    },
+    {
+      "file": "hachiware-nani.mp3",
+      "source": "https://www.myinstants.com/en/search/?name=hachiware",
+      "clip": "Nani nani?"
+    },
+    {
+      "file": "usagi-yaha.mp3",
+      "source": "https://www.myinstants.com/en/search/?name=chiikawa",
+      "clip": "usagi yahaaaaaa"
+    },
+    {
+      "file": "usagi-huh.mp3",
+      "source": "https://www.myinstants.com/en/search/?name=chiikawa",
+      "clip": "Chiikawa usagi huh"
+    },
+    {
+      "file": "usagi-una.mp3",
+      "source": "https://www.myinstants.com/en/search/?name=chiikawa",
+      "clip": "chiikawa usagi una"
+    }
   ],
   "other_audio": "Web Audio로 생성한 바람·발걸음·접촉 효과음",
-  "engine":"Three.js 0.170.0, MIT license"
+  "engine": "Three.js 0.170.0, MIT license",
+  "models": {
+    "author": "Nini (@doniisw)",
+    "source": "https://sketchfab.com/3d-models/chiikawa-and-friends-4c156cab855e451481829d25f4cf3bb1",
+    "license": "CC BY-NC 4.0",
+    "asset_files": [
+      "models/chiikawa.glb",
+      "models/hachiware.glb",
+      "models/usagi.glb"
+    ],
+    "geometry": "Original imported meshes, UVs and normals. Only coordinates, uniform scale and disconnected-part pivots converted.",
+    "smile_eyes_source": "https://pbs.twimg.com/media/FNEsouhVIAUGqOs?format=jpg&name=large",
+    "smile_behavior": "Usagi keeps original expression; only Chiikawa and Hachiware use closed smiling eyes."
+  },
+  "weapon_reference": "https://chiikawamarket.jp/products/4589468443698"
 }
