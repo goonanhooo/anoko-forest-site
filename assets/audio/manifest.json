@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "ambient": false,
+  "synthesized_effects": false,
+  "characters": [
+    {
+      "name": "치이카와",
+      "events": {
+        "flee": [
+          "chiikawa-flee-1.mp3"
+        ],
+        "held": [
+          "chiikawa-held-1.mp3"
+        ],
+        "drop": [
+          "chiikawa-drop-1.mp3"
+        ],
+        "juggle": [
+          "chiikawa-juggle-1.mp3",
+          "chiikawa-juggle-2.mp3"
+        ],
+        "upset": [
+          "chiikawa-held-1.mp3"
+        ],
+        "happy": [],
+        "idle": []
+      }
+    },
+    {
+      "name": "하치와레",
+      "events": {
+        "flee": [
+          "hachiware-flee-1.mp3"
+        ],
+        "held": [
+          "hachiware-held-1.mp3"
+        ],
+        "drop": [
+          "hachiware-drop-1.mp3"
+        ],
+        "juggle": [
+          "hachiware-juggle-1.mp3",
+          "hachiware-juggle-2.mp3"
+        ],
+        "upset": [
+          "hachiware-held-1.mp3"
+        ],
+        "happy": [],
+        "idle": []
+      }
+    },
+    {
+      "name": "우사기",
+      "events": {
+        "flee": [
+          "usagi-flee-1.mp3"
+        ],
+        "held": [
+          "usagi-held-1.mp3",
+          "usagi-held-2.mp3"
+        ],
+        "drop": [
+          "usagi-drop-1.mp3"
+        ],
+        "juggle": [
+          "usagi-juggle-1.mp3",
+          "usagi-juggle-2.mp3"
+        ],
+        "upset": [
+          "usagi-held-1.mp3",
+          "usagi-held-2.mp3"
+        ],
+        "happy": [],
+        "idle": []
+      }
+    }
+  ],
+  "dance": {
+    "file": "anoko-dance.mp3",
+    "duration": 8,
+    "source": "https://www.youtube.com/shorts/vk5iLhlofiI"
+  }
+}

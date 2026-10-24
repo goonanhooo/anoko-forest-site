@@ -6,40 +6,248 @@
     "https://chiikawamarket.jp/collections/anoko"
   ],
   "character_rights": "© nagano / chiikawa committee",
-  "audio_note": "짧은 사용자 업로드 음성 클립. 원작 권리는 각 권리자에게 있습니다. 공식 제공 게임 음원이 아닙니다.",
+  "audio_note": "실제 애니메이션 녹음의 짧은 구간. 보컬 분리·무음 정리·음량 조정만 수행하며 음성 생성, 성우 모사, 피치·속도 변경은 하지 않습니다. 원작 권리는 각 권리자에게 있습니다.",
   "audio": [
     {
-      "file": "chiikawa-iya.mp3",
+      "file": "chiikawa-flee-1.mp3",
+      "event": "flee",
       "source": "https://www.myinstants.com/en/instant/chiikawa-iya-89838/",
-      "line": "イヤ、イヤ、イヤ～！"
+      "source_recording": "chiikawa-iya",
+      "source_seconds": [
+        0,
+        3.08
+      ],
+      "duration": 2.58,
+      "rms_db": -20.0,
+      "peak_db": -3.35,
+      "processing": "Demucs htdemucs vocal stem, mono, edge silence trimmed, level normalized, 9ms fades; original pitch/speed"
     },
     {
-      "file": "hachiware-oi.mp3",
+      "file": "chiikawa-held-1.mp3",
+      "event": "held",
+      "source": "https://www.youtube.com/watch?v=nPAgLlhl41k",
+      "source_recording": "chiikawa-reactions",
+      "source_seconds": [
+        151.15,
+        153.05
+      ],
+      "duration": 1.64,
+      "rms_db": -20.0,
+      "peak_db": -10.69,
+      "processing": "Demucs htdemucs vocal stem, mono, edge silence trimmed, level normalized, 9ms fades; original pitch/speed"
+    },
+    {
+      "file": "chiikawa-drop-1.mp3",
+      "event": "drop",
+      "source": "https://www.myinstants.com/en/instant/chiikawa-iya-89838/",
+      "source_recording": "chiikawa-iya",
+      "source_seconds": [
+        1.9,
+        3.08
+      ],
+      "duration": 0.815,
+      "rms_db": -20.11,
+      "peak_db": -5.19,
+      "processing": "Demucs htdemucs vocal stem, mono, edge silence trimmed, level normalized, 9ms fades; original pitch/speed"
+    },
+    {
+      "file": "chiikawa-juggle-1.mp3",
+      "event": "juggle",
+      "source": "https://www.youtube.com/watch?v=nPAgLlhl41k",
+      "source_recording": "chiikawa-reactions",
+      "source_seconds": [
+        155.4,
+        156.3
+      ],
+      "duration": 0.65,
+      "rms_db": -20.0,
+      "peak_db": -9.06,
+      "processing": "Demucs htdemucs vocal stem, mono, edge silence trimmed, level normalized, 9ms fades; original pitch/speed"
+    },
+    {
+      "file": "chiikawa-juggle-2.mp3",
+      "event": "juggle",
+      "source": "https://www.myinstants.com/en/instant/chiikawa-iya-89838/",
+      "source_recording": "chiikawa-iya",
+      "source_seconds": [
+        0.78,
+        1.94
+      ],
+      "duration": 1.025,
+      "rms_db": -20.1,
+      "peak_db": -3.18,
+      "processing": "Demucs htdemucs vocal stem, mono, edge silence trimmed, level normalized, 9ms fades; original pitch/speed"
+    },
+    {
+      "file": "hachiware-flee-1.mp3",
+      "event": "flee",
       "source": "https://www.myinstants.com/en/search/?name=hachiware",
-      "clip": "Hachiware - Oi"
+      "source_recording": "hachiware-nani",
+      "source_seconds": [
+        0,
+        1.046
+      ],
+      "duration": 1.045,
+      "rms_db": -20.0,
+      "peak_db": -7.19,
+      "processing": "Demucs htdemucs vocal stem, mono, edge silence trimmed, level normalized, 9ms fades; original pitch/speed"
     },
     {
-      "file": "hachiware-nani.mp3",
-      "source": "https://www.myinstants.com/en/search/?name=hachiware",
-      "clip": "Nani nani?"
+      "file": "hachiware-held-1.mp3",
+      "event": "held",
+      "source": "https://www.youtube.com/watch?v=VwGW4CVpUXk",
+      "source_recording": "hachiware-pinch",
+      "source_seconds": [
+        16.55,
+        19.8
+      ],
+      "duration": 3.235,
+      "rms_db": -20.02,
+      "peak_db": -6.46,
+      "processing": "Demucs htdemucs vocal stem, mono, edge silence trimmed, level normalized, 9ms fades; original pitch/speed"
     },
     {
-      "file": "usagi-yaha.mp3",
+      "file": "hachiware-drop-1.mp3",
+      "event": "drop",
+      "source": "https://www.youtube.com/watch?v=VwGW4CVpUXk",
+      "source_recording": "hachiware-pinch",
+      "source_seconds": [
+        10.2,
+        11.02
+      ],
+      "duration": 0.66,
+      "rms_db": -20.0,
+      "peak_db": -9.82,
+      "processing": "Demucs htdemucs vocal stem, mono, edge silence trimmed, level normalized, 9ms fades; original pitch/speed"
+    },
+    {
+      "file": "hachiware-juggle-1.mp3",
+      "event": "juggle",
+      "source": "https://www.youtube.com/watch?v=VwGW4CVpUXk",
+      "source_recording": "hachiware-pinch",
+      "source_seconds": [
+        26.48,
+        27.24
+      ],
+      "duration": 0.52,
+      "rms_db": -20.0,
+      "peak_db": -9.45,
+      "processing": "Demucs htdemucs vocal stem, mono, edge silence trimmed, level normalized, 9ms fades; original pitch/speed"
+    },
+    {
+      "file": "hachiware-juggle-2.mp3",
+      "event": "juggle",
+      "source": "https://www.youtube.com/watch?v=VwGW4CVpUXk",
+      "source_recording": "hachiware-pinch",
+      "source_seconds": [
+        15.55,
+        17.3
+      ],
+      "duration": 1.58,
+      "rms_db": -20.0,
+      "peak_db": -7.3,
+      "processing": "Demucs htdemucs vocal stem, mono, edge silence trimmed, level normalized, 9ms fades; original pitch/speed"
+    },
+    {
+      "file": "usagi-flee-1.mp3",
+      "event": "flee",
       "source": "https://www.myinstants.com/en/search/?name=chiikawa",
-      "clip": "usagi yahaaaaaa"
+      "source_recording": "usagi-fight",
+      "source_seconds": [
+        0,
+        1.6
+      ],
+      "duration": 1.425,
+      "rms_db": -20.0,
+      "peak_db": -4.67,
+      "processing": "Demucs htdemucs vocal stem, mono, edge silence trimmed, level normalized, 9ms fades; original pitch/speed"
     },
     {
-      "file": "usagi-huh.mp3",
-      "source": "https://www.myinstants.com/en/search/?name=chiikawa",
-      "clip": "Chiikawa usagi huh"
+      "file": "usagi-held-1.mp3",
+      "event": "held",
+      "source": "https://github.com/ssskay/Yaha-Pet/tree/fork-main/assets/usagi/sounds",
+      "source_recording": "usagi-pack",
+      "source_seconds": [
+        0,
+        0.72
+      ],
+      "duration": 0.715,
+      "rms_db": -20.0,
+      "peak_db": -5.46,
+      "processing": "Original isolated voice, mono, edge silence trimmed, level normalized, 9ms fades; original pitch/speed"
     },
     {
-      "file": "usagi-una.mp3",
-      "source": "https://www.myinstants.com/en/search/?name=chiikawa",
-      "clip": "chiikawa usagi una"
+      "file": "usagi-held-2.mp3",
+      "event": "held",
+      "source": "https://github.com/ssskay/Yaha-Pet/tree/fork-main/assets/usagi/sounds",
+      "source_recording": "usagi-pack",
+      "source_seconds": [
+        0,
+        0.465
+      ],
+      "duration": 0.464,
+      "rms_db": -20.0,
+      "peak_db": -6.26,
+      "processing": "Original isolated voice, mono, edge silence trimmed, level normalized, 9ms fades; original pitch/speed"
+    },
+    {
+      "file": "usagi-drop-1.mp3",
+      "event": "drop",
+      "source": "https://github.com/ssskay/Yaha-Pet/tree/fork-main/assets/usagi/sounds",
+      "source_recording": "usagi-pack",
+      "source_seconds": [
+        0,
+        0.674
+      ],
+      "duration": 0.618,
+      "rms_db": -20.0,
+      "peak_db": -6.1,
+      "processing": "Original isolated voice, mono, edge silence trimmed, level normalized, 9ms fades; original pitch/speed"
+    },
+    {
+      "file": "usagi-juggle-1.mp3",
+      "event": "juggle",
+      "source": "https://github.com/ssskay/Yaha-Pet/tree/fork-main/assets/usagi/sounds",
+      "source_recording": "usagi-pack",
+      "source_seconds": [
+        0,
+        1.278
+      ],
+      "duration": 1.272,
+      "rms_db": -20.0,
+      "peak_db": -7.76,
+      "processing": "Original isolated voice, mono, edge silence trimmed, level normalized, 9ms fades; original pitch/speed"
+    },
+    {
+      "file": "usagi-juggle-2.mp3",
+      "event": "juggle",
+      "source": "https://github.com/ssskay/Yaha-Pet/tree/fork-main/assets/usagi/sounds",
+      "source_recording": "usagi-pack",
+      "source_seconds": [
+        0,
+        0.465
+      ],
+      "duration": 0.464,
+      "rms_db": -20.0,
+      "peak_db": -6.26,
+      "processing": "Original isolated voice, mono, edge silence trimmed, level normalized, 9ms fades; original pitch/speed"
+    },
+    {
+      "file": "anoko-dance.mp3",
+      "event": "dance",
+      "source": "https://www.youtube.com/shorts/vk5iLhlofiI",
+      "source_recording": "anoko-user-video",
+      "source_seconds": [
+        0.05,
+        8.05
+      ],
+      "duration": 8.0,
+      "rms_db": -21.84,
+      "peak_db": -1.11,
+      "processing": "Demucs htdemucs vocal stem, mono, edge silence trimmed, level normalized, 9ms fades; original pitch/speed"
     }
   ],
-  "other_audio": "Web Audio로 생성한 바람·발걸음·접촉 효과음",
+  "other_audio": "없음. 바람·앰비언스·발소리·합성 효과음을 제거했습니다. 춤을 출 때만 사용자 제공 영상의 아노코 보컬 발췌를 재생합니다.",
   "engine": "Three.js 0.170.0, MIT license",
   "models": {
     "author": "Nini (@doniisw)",
@@ -57,5 +265,6 @@
     "hachiware_cry_reference": "User-supplied Hachiware crying illustration, 2026-10-23"
   },
   "weapon_reference": "https://chiikawamarket.jp/products/4589468443698",
-  "weapon_modifications": "Six white spikes anchored to the inner fork surface on each sasumata. Usagi carries a yellow staff with white tips. Visible palms are constrained to shaft grip points through all animation states."
+  "weapon_modifications": "Six white spikes anchored to the inner fork surface on each sasumata. Usagi carries a yellow staff with white tips. Visible palms are constrained to shaft grip points through all animation states.",
+  "audio_processing": "Demucs htdemucs vocal separation for mixed sources, silence trimming, mono 44.1 kHz MP3, level normalization and short fades. Original overlapping effects may leave residual artifacts."
 }

@@ -2,6 +2,7 @@ import * as THREE from './vendor/three.module.js';
 import {loadCharacterAsset,applyExpression} from './character-assets.js';
 import {createWeaponRig,updateWeaponGrip,weaponGripSnapshot} from './weapon-rig.js';
 import {juggleMotion,escapeTarget} from './simulation-motion.js';
+import {SceneAudio,reactionForState} from './scene-audio.js';
 
 const canvas=document.querySelector('#forest');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
@@ -21,7 +22,7 @@ camera.rotation.order='YXZ';
 camera.position.set(0,2.75,6.5);
 scene.add(camera);
 let yaw=0,pitch=-.25,time=0,last=performance.now(),danceStart=-100,danceUntil=-100,juggling=false,muted=false;
-let motion=0,handReach=0,petUntil=0,voiceNext=0,stepTime=0,juggleLook=0;
+let motion=0,handReach=0,petUntil=0,voiceNext=0,juggleLook=0;
 const keys=new Set(),held=[],characters=[],trees=[],particles=[];
 const up=new THREE.Vector3(0,1,0),tmp=new THREE.Vector3();
 const rng=(a,b)=>a+Math.random()*(b-a);
@@ -123,17 +124,11 @@ for(const side of [-1,1]){
  hand.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});hands.push(hand);
 }
 
-// Positional voice clips, a quiet breeze, leaves, steps and gentle toy-like effects.
-const clips={0:{fear:['chiikawa-iya.mp3'],idle:[],happy:[]},1:{fear:['hachiware-nani.mp3'],idle:['hachiware-oi.mp3'],happy:['hachiware-oi.mp3']},2:{fear:['usagi-huh.mp3','usagi-yaha.mp3'],idle:['usagi-una.mp3'],happy:['usagi-yaha.mp3']}};
-let audioContext=null,master=null,wind=null,voiceBusyUntil=0;
-const audioCache=new Map(),activeVoices=new Set();
-function initAudio(){if(audioContext){audioContext.resume().catch(()=>{});return;}try{audioContext=new AudioContext();master=audioContext.createGain();master.gain.value=muted?0:.65;master.connect(audioContext.destination);const n=audioContext.sampleRate*5,b=audioContext.createBuffer(1,n,audioContext.sampleRate),d=b.getChannelData(0);let prev=0;for(let i=0;i<n;i++){prev=(prev+Math.random()*.025-.0125)*.988;d[i]=prev;}wind=audioContext.createBufferSource();wind.buffer=b;wind.loop=true;const f=audioContext.createBiquadFilter();f.type='lowpass';f.frequency.value=700;const gain=audioContext.createGain();gain.gain.value=.35;wind.connect(f).connect(gain).connect(master);wind.start();for(const name of new Set(Object.values(clips).flatMap(v=>Object.values(v).flat()))){fetch('./assets/'+name).then(r=>{if(!r.ok)throw Error('audio unavailable');return r.arrayBuffer();}).then(b=>audioContext.decodeAudioData(b)).then(b=>audioCache.set(name,b)).catch(()=>{});}}catch(e){console.warn('Audio unavailable',e);}}
-function effect(freq=400,length=.14,volume=.08,type='sine'){if(!audioContext||muted)return;const o=audioContext.createOscillator(),g=audioContext.createGain(),t=audioContext.currentTime;o.type=type;o.frequency.setValueAtTime(freq,t);o.frequency.exponentialRampToValueAtTime(Math.max(20,freq*.65),t+length);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(volume,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+length);o.connect(g).connect(master);o.start();o.stop(t+length);}
-function voice(c,kind='fear',force=false){
- if(!audioContext||muted||time<c.nextVoice||(!force&&time<voiceBusyUntil))return;
- const list=clips[c.type][kind];if(!list.length){if(kind==='happy'){effect(650,.09,.025);setTimeout(()=>effect(780,.12,.018),130);c.nextVoice=time+8;}return;}const file=list[Math.floor(Math.random()*list.length)],buffer=audioCache.get(file);if(!buffer)return;
- const source=audioContext.createBufferSource();source.buffer=buffer;const p=audioContext.createStereoPanner(),g=audioContext.createGain();tmp.copy(c.root.position).sub(camera.position);const dist=tmp.length(),side=tmp.x*Math.cos(yaw)-tmp.z*Math.sin(yaw);p.pan.value=clamp(side/7,-.8,.8);g.gain.value=.65*clamp(1-dist/30,.15,1);source.connect(p).connect(g).connect(master);source.start();activeVoices.add(source);source.onended=()=>activeVoices.delete(source);c.nextVoice=time+5;voiceBusyUntil=time+Math.min(buffer.duration,3.5)+.6;
-}
+// No ambience or synthesized effects: only cleaned recordings of the characters.
+const sound=new SceneAudio();
+function initAudio(){sound.unlock();}
+function voice(c,kind='fear',force=false){c.nextVoice=time+5.5;sound.play(c,reactionForState(c,kind),{force});}
+addEventListener('visibilitychange',()=>sound.setPaused(document.hidden));
 
 function setFace(c,expression){if(c.type===2)expression='calm';else if(['held','juggle','eating'].includes(c.state))expression=c.type===1?'sad':'cry';else if(time<c.griefUntil)expression='sad';if(c.face===expression)return;applyExpression(c,expression);c.face=expression;}
 function state(c,next,duration=0){c.state=next;c.stateAt=time;c.until=time+duration;}
@@ -141,10 +136,10 @@ function freeCharacters(){return characters.filter(c=>!['held','juggle','eating'
 function nearestTarget(){const dir=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);let best=null,score=1e9;for(const c of freeCharacters()){tmp.copy(c.root.position).add(new THREE.Vector3(0,.95,0)).sub(camera.position);const dist=tmp.length(),dot=tmp.clone().normalize().dot(dir);if(dist<7.8&&dot>.8){const s=dist+(1-dot)*12;if(s<score){score=s;best=c;}}}return best;}
 function startFlee(c,duration=9){
  state(c,'flee',duration);c.fear=1;c.threatUntil=Math.max(c.threatUntil,time+duration);
- const distance=Math.hypot(c.root.position.x-camera.position.x,c.root.position.z-camera.position.z);c.tripAt=c.type===2||distance>10.8?Infinity:time+(c.type===0?2.5:4.1);setFace(c,time<c.griefUntil?'sad':'scared');
+ const distance=Math.hypot(c.root.position.x-camera.position.x,c.root.position.z-camera.position.z);c.tripAt=c.type===2||distance>10.8?Infinity:time+(c.type===0?2.5:4.1);setFace(c,time<c.griefUntil?'sad':'scared');voice(c,'flee');
 }
 function alertFriends(victim,kind){
- danceUntil=-100;
+ danceUntil=-100;sound.stopDance();
  for(const c of characters){
   if(c===victim||['eating','eaten'].includes(c.state))continue;
   c.fear=1;c.safeUntil=0;c.threatUntil=time+11;
@@ -157,19 +152,19 @@ function alertFriends(victim,kind){
   voice(c,'fear');
  }
 }
-function grab(){const c=nearestTarget();if(!c||held.length>=3){if(!c&&held.length)release(false);return;}state(c,juggling?'juggle':'held');held.push(c);c.weapon.visible=true;c.fear=1;setFace(c,time<c.griefUntil?'sad':'scared');voice(c,'fear',true);alertFriends(c,'grab');handReach=1;effect(250,.16,.08);}
-function release(toss=false){if(!held.length)return;const c=held.pop();c.root.scale.setScalar(1);c.rig.rotation.set(0,0,0);c.root.rotation.x=0;const dir=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);c.velocity.copy(dir).multiplyScalar(toss?3.6:.7);c.velocity.y=toss?2.6:.2;state(c,'thrown');c.threatUntil=time+9;setFace(c,time<c.griefUntil?'sad':'scared');effect(220,.25,.05);if(!held.length)juggling=false;}
-function toggleJuggle(){if(!held.length)grab();if(!held.length)return;juggling=!juggling;held.forEach(c=>{state(c,juggling?'juggle':'held');setFace(c,time<c.griefUntil?'sad':'scared');});effect(juggling?600:400,.2);}
-function eat(){if(characters.some(c=>c.state==='eating'))return;if(!held.length){grab();if(!held.length)return;}const c=held.pop();state(c,'eating');c.eatAt=time;c.eatFrom=c.root.position.clone();setFace(c,'scared');voice(c,'fear',true);alertFriends(c,'eating');document.body.classList.add('eating');setTimeout(()=>document.body.classList.remove('eating'),2600);setTimeout(()=>effect(125,.22,.13),1100);setTimeout(()=>effect(85,.28,.11),1550);setTimeout(()=>effect(58,.42,.13),2000);if(!held.length)juggling=false;}
-function scare(){danceUntil=-100;for(const c of freeCharacters()){c.fear=1;c.safeUntil=0;c.threatUntil=time+10;if(c.type===1)state(c,'defend',1.1);else if(c.type===2)state(c,'dodge',.85);else startFlee(c,10);setFace(c,time<c.griefUntil?'sad':c.type===0?'cry':'scared');voice(c,'fear');}effect(58,.6,.13,'triangle');handReach=.6;}
-function dance(){danceStart=time;danceUntil=time+8;for(const c of freeCharacters()){state(c,'cautious',3);c.danceReact=time+3;c.safeUntil=time+12;c.threatUntil=0;c.fear=.45;c.weapon.visible=true;setFace(c,time<c.griefUntil?'sad':'scared');}effect(330,.18,.04);}
-function pet(){const c=nearestTarget()||held.at(-1);if(!c)return;petUntil=time+1.4;c.fear=0;c.griefUntil=0;c.safeUntil=time+20;c.threatUntil=0;setFace(c,'happy');voice(c,'happy');if(!held.includes(c))state(c,'follow',40);effect(730,.12,.025);}
-function reset(){held.length=0;juggling=false;juggleLook=0;danceUntil=-100;characters.forEach(c=>{c.root.position.copy(c.home);c.root.rotation.set(0,0,0);c.root.scale.setScalar(1);c.root.visible=true;c.rig.rotation.set(0,0,0);c.rig.position.set(0,0,0);c.fear=0;c.griefUntil=0;c.threatUntil=0;c.safeUntil=time+3;c.weapon.visible=true;c.nextIdle=time+rng(5,10);state(c,'idle');setFace(c,'calm');});}
+function grab(){const c=nearestTarget();if(!c||held.length>=3){if(!c&&held.length)release(false);return;}state(c,juggling?'juggle':'held');held.push(c);c.weapon.visible=true;c.fear=1;setFace(c,time<c.griefUntil?'sad':'scared');voice(c,'fear',true);alertFriends(c,'grab');handReach=1;}
+function release(toss=false){if(!held.length)return;const c=held.pop();c.root.scale.setScalar(1);c.rig.rotation.set(0,0,0);c.root.rotation.x=0;const dir=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);c.velocity.copy(dir).multiplyScalar(toss?3.6:.7);c.velocity.y=toss?2.6:.2;state(c,'thrown');c.threatUntil=time+9;setFace(c,time<c.griefUntil?'sad':'scared');voice(c,'drop',true);if(!held.length)juggling=false;}
+function toggleJuggle(){if(!held.length)grab();if(!held.length)return;juggling=!juggling;held.forEach((c,i)=>{state(c,juggling?'juggle':'held');setFace(c,time<c.griefUntil?'sad':'scared');sound.play(c,juggling?'juggle':'held',{force:true,delay:i*.8});});}
+function eat(){if(characters.some(c=>c.state==='eating'))return;if(!held.length){grab();if(!held.length)return;}const c=held.pop();state(c,'eating');c.eatAt=time;c.eatFrom=c.root.position.clone();setFace(c,'scared');voice(c,'fear',true);alertFriends(c,'eating');document.body.classList.add('eating');setTimeout(()=>document.body.classList.remove('eating'),2600);if(!held.length)juggling=false;}
+function scare(){danceUntil=-100;sound.stopDance();for(const c of freeCharacters()){c.fear=1;c.safeUntil=0;c.threatUntil=time+10;if(c.type===1)state(c,'defend',1.1);else if(c.type===2)state(c,'dodge',.85);else startFlee(c,10);setFace(c,time<c.griefUntil?'sad':c.type===0?'cry':'scared');voice(c,'fear');}handReach=.6;}
+function dance(){sound.startDance(8);danceStart=time;danceUntil=time+8;for(const c of freeCharacters()){state(c,'cautious',3);c.danceReact=time+3;c.safeUntil=time+12;c.threatUntil=0;c.fear=.45;c.weapon.visible=true;setFace(c,time<c.griefUntil?'sad':'scared');}}
+function pet(){const c=nearestTarget()||held.at(-1);if(!c)return;petUntil=time+1.4;c.fear=0;c.griefUntil=0;c.safeUntil=time+20;c.threatUntil=0;setFace(c,'happy');voice(c,'happy');if(!held.includes(c))state(c,'follow',40);}
+function reset(){sound.reset();held.length=0;juggling=false;juggleLook=0;danceUntil=-100;characters.forEach(c=>{c.root.position.copy(c.home);c.root.rotation.set(0,0,0);c.root.scale.setScalar(1);c.root.visible=true;c.rig.rotation.set(0,0,0);c.rig.position.set(0,0,0);c.fear=0;c.griefUntil=0;c.threatUntil=0;c.safeUntil=time+3;c.weapon.visible=true;c.nextIdle=time+rng(5,10);state(c,'idle');setFace(c,'calm');});}
 function lookAtCharacter(index){const c=characters[index];if(!c||c.state==='eaten')return;const d=c.root.position.clone().add(new THREE.Vector3(0,1.1,0)).sub(camera.position);yaw=Math.atan2(-d.x,-d.z);pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));camera.rotation.set(pitch,yaw,0);camera.updateMatrixWorld();}
 
 addEventListener('keydown',e=>{
  if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Tab'].includes(e.code))e.preventDefault();keys.add(e.code);initAudio();if(e.repeat)return;
- switch(e.code){case 'KeyE':grab();break;case 'KeyJ':toggleJuggle();break;case 'KeyQ':release(e.shiftKey);break;case 'KeyG':eat();break;case 'KeyT':dance();break;case 'Space':scare();break;case 'KeyF':pet();break;case 'KeyR':reset();break;case 'Digit1':lookAtCharacter(0);break;case 'Digit2':lookAtCharacter(1);break;case 'Digit3':lookAtCharacter(2);break;case 'KeyM':muted=!muted;if(master)master.gain.setTargetAtTime(muted?0:.65,audioContext.currentTime,.1);break;}
+ switch(e.code){case 'KeyE':grab();break;case 'KeyJ':toggleJuggle();break;case 'KeyQ':release(e.shiftKey);break;case 'KeyG':eat();break;case 'KeyT':dance();break;case 'Space':scare();break;case 'KeyF':pet();break;case 'KeyR':reset();break;case 'Digit1':lookAtCharacter(0);break;case 'Digit2':lookAtCharacter(1);break;case 'Digit3':lookAtCharacter(2);break;case 'KeyM':muted=!muted;sound.setMuted(muted);break;}
 });
 addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>keys.clear());
 let mouseDown=false,mouseMoved=false,lastX=0,lastY=0;
@@ -215,7 +210,7 @@ function updateCharacter(c,dt){
    const flight=juggleMotion(t,i,n,c.type);({x,y,z}=flight);setFace(c,time<c.griefUntil?'sad':'scared');c.fear=1;
    const spin=t*Math.PI/3.8+i*.35;c.rig.rotation.z=Math.atan2(Math.sin(spin),Math.cos(spin));c.rig.rotation.y=Math.sin(t*.8+i)*.22;c.rig.rotation.x=Math.sin(flight.phase*Math.PI*2)*.12;
    const pivot=c.type===2?1.05:.9;c.rig.position.set(0,pivot,0).sub(new THREE.Vector3(0,pivot,0).applyEuler(c.rig.rotation));
-   const caught=Math.floor(t/1.9+i*2/Math.max(1,n));if(c.lastCatch!==caught){c.lastCatch=caught;handReach=.25;effect(190,.09,.025);}if((flight.leg<.02||flight.leg>.98)&&time>c.nextVoice)voice(c,'fear');
+   const caught=Math.floor(t/1.9+i*2/Math.max(1,n));if(c.lastCatch!==caught){c.lastCatch=caught;handReach=.25;}if((flight.leg<.02||flight.leg>.98)&&time>c.nextVoice)voice(c,'fear');
   }
   else{y+=Math.sin(time*2+i)*.045;c.rig.rotation.z=Math.sin(time*5+i)*.05;}
   const target=new THREE.Vector3(x,y,z);if(s==='juggle')target.applyAxisAngle(up,yaw);else target.applyQuaternion(camera.quaternion);target.add(camera.position);c.root.position.lerp(target,Math.min(1,dt*(s==='juggle'?12:7)));facePlayer(c,dt*2);c.weapon.visible=true;
@@ -224,7 +219,7 @@ function updateCharacter(c,dt){
   if(t<.55)c.root.position.lerpVectors(c.eatFrom,target,THREE.MathUtils.smoothstep(t,0,.55));else c.root.position.copy(target);c.root.scale.setScalar(1-THREE.MathUtils.smoothstep(t,1.55,2.35)*.98);c.rig.rotation.z=Math.sin(t*7)*.07;facePlayer(c,dt*2);if(t>=2.35){c.root.visible=false;state(c,'eaten');}
  }else if(s==='thrown'){
   c.velocity.y-=5*dt;c.root.position.addScaledVector(c.velocity,dt);c.rig.rotation.z+=dt*1.4;facePlayer(c,dt);
-  if(c.root.position.y<=.03){c.root.position.y=0;state(c,'trip',2.8);setFace(c,'cry');effect(125,.16,.07);}
+  if(c.root.position.y<=.03){c.root.position.y=0;state(c,'trip',2.8);setFace(c,'cry');voice(c,'drop');}
  }else if(s==='trip'){
   const stumble=THREE.MathUtils.smoothstep(t,0,.18)*(1-THREE.MathUtils.smoothstep(t,.65,1.55));c.rig.rotation.set(0,0,(c.type===2?-.7:-.95)*stumble);c.rig.position.y=.42*stumble;c.weapon.visible=true;setFace(c,c.type===2?'dizzy':'cry');
   if(time>c.until){if(time<c.threatUntil)startFlee(c,7);else{state(c,'cautious',4);setFace(c,'scared');}}
@@ -271,7 +266,7 @@ function updatePlayer(dt){
  const magnitude=Math.hypot(vx,vz);if(magnitude>1){vx/=magnitude;vz/=magnitude;}
  const speed=keys.has('ShiftLeft')?2.4:1.5;
  const dx=(vx*Math.cos(yaw)+vz*Math.sin(yaw))*speed*dt,dz=(-vx*Math.sin(yaw)+vz*Math.cos(yaw))*speed*dt;
- if(magnitude>.03){const next=camera.position.clone();next.x+=dx;next.z+=dz;let blocked=false;for(const tree of trees){if(Math.hypot(next.x-tree.x,next.z-tree.z)<tree.r+.4){blocked=true;break;}}if(!blocked&&Math.hypot(next.x,next.z)<29){camera.position.x=next.x;camera.position.z=next.z;}motion+=dt*4;stepTime+=dt;if(stepTime>.65){stepTime=0;effect(rng(65,90),.1,.025,'triangle');}}
+ if(magnitude>.03){const next=camera.position.clone();next.x+=dx;next.z+=dz;let blocked=false;for(const tree of trees){if(Math.hypot(next.x-tree.x,next.z-tree.z)<tree.r+.4){blocked=true;break;}}if(!blocked&&Math.hypot(next.x,next.z)<29){camera.position.x=next.x;camera.position.z=next.z;}motion+=dt*4;}
  const dancing=time<danceUntil,danceTime=time-danceStart;
  camera.position.y=2.75+(magnitude>.03?Math.sin(motion)*.018:Math.sin(time*.8)*.008)+(dancing?Math.sin(danceTime*3.4)*.055:0);
  const throwHeight=juggling&&held.length?Math.max(...held.map((c,i)=>juggleMotion(time-c.stateAt,i,held.length,c.type).arc)):0;
@@ -289,9 +284,9 @@ function updatePlayer(dt){
 }
 
 function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-last)/1000,.05);last=now;if(document.hidden)return;time+=dt;updatePlayer(dt);for(const c of characters)updateCharacter(c,dt);motes.rotation.y=Math.sin(time*.025)*.12;
- const p=dustGeo.attributes.position;for(let i=0;i<160;i++){p.array[i*3+1]+=Math.sin(time*.3+i)*dt*.025;p.array[i*3]+=Math.sin(time*.12+i)*dt*.014;}p.needsUpdate=true;renderer.render(scene,camera);if(Math.floor(time*4)!==Math.floor((time-dt)*4))canvas.dataset.simulation=JSON.stringify(window.forestSimulation.snapshot);
+ const p=dustGeo.attributes.position;for(let i=0;i<160;i++){p.array[i*3+1]+=Math.sin(time*.3+i)*dt*.025;p.array[i*3]+=Math.sin(time*.12+i)*dt*.014;}p.needsUpdate=true;sound.tick(characters,time,camera.position,yaw,time<danceUntil);renderer.render(scene,camera);if(Math.floor(time*4)!==Math.floor((time-dt)*4))canvas.dataset.simulation=JSON.stringify(window.forestSimulation.snapshot);
 }
 requestAnimationFrame(frame);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.fov=viewFov();camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 // A read-only snapshot makes behavioural verification possible without adding UI.
-window.forestSimulation={get snapshot(){return {time,dancing:time<danceUntil,juggling,held:held.map(c=>c.name),position:camera.position.toArray(),lookPitch:camera.rotation.x,lookYaw:camera.rotation.y,characters:characters.map(c=>({name:c.name,state:c.state,face:c.face,spin:c.rig.rotation.toArray().slice(0,3),upset:c.face==='sad'||time<c.griefUntil,visible:c.root.visible,position:c.root.position.toArray(),viewPosition:c.root.position.clone().sub(camera.position).applyAxisAngle(up,-yaw).toArray(),weapon:weaponGripSnapshot(c)})),assetSource:'Nini / original published meshes',audioLoaded:[...audioCache.keys()],drawCalls:renderer.info.render.calls};}};
+window.forestSimulation={get snapshot(){return {time,dancing:time<danceUntil,juggling,held:held.map(c=>c.name),position:camera.position.toArray(),lookPitch:camera.rotation.x,lookYaw:camera.rotation.y,characters:characters.map(c=>({name:c.name,state:c.state,face:c.face,spin:c.rig.rotation.toArray().slice(0,3),upset:c.face==='sad'||time<c.griefUntil,visible:c.root.visible,position:c.root.position.toArray(),viewPosition:c.root.position.clone().sub(camera.position).applyAxisAngle(up,-yaw).toArray(),weapon:weaponGripSnapshot(c)})),assetSource:'Nini / original published meshes',audio:sound.snapshot,drawCalls:renderer.info.render.calls};}};
